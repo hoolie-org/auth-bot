@@ -3,6 +3,7 @@
 import axios from "axios";
 import * as fs from "fs";
 import {CommandMiddleware, InlineKeyboard} from "grammy";
+import {ObjectId} from "mongodb";
 import * as path from "path";
 import config from "../config";
 import {$db} from "../helpers/makeDb";
@@ -11,30 +12,34 @@ import UserModel from "../models/User";
 
 const onStart: CommandMiddleware<ContextModel> = async(ctx) => {
 
-  // eslint-disable-next-line
-  let payload: any;
+  /* Get payload info */
 
-  try {
-    payload = JSON.parse(ctx.message?.text.replace("/start ", "") ?? "");
-
-    if(
-      typeof payload.appUrl !== "string"
-      ||
-      typeof payload.socketId !== "string"
-      ||
-      typeof payload.appBackendEndpoint !== "string"
-    ) {
-      throw new Error("Can't parse payload");
-    }
+  const payload = ctx.message?.text.replace("/start ", "");
+  if(!payload) {
+    return ctx.reply((`
+      Hi ${ctx.from?.first_name}!
+      
+      Go to auth.hoolie.org for more info
+    `).replace(/^ +/gm, ""), {
+      parse_mode: "HTML"
+    });
   }
-  catch {
-    return ctx.reply("❌ Can't parse payload");
+
+  const [appId, socketId] = atob(payload).split(":");
+  if(!ObjectId.isValid(appId)) {
+    return ctx.reply("❌ App not found");
   }
 
   // Get user info
   const userInfo = await ctx.getChat();
   if(userInfo.type !== "private" || !userInfo.photo) {
     throw new Error("Cant parse user data");
+  }
+
+  // Get app info
+  const app = await $db.apps.findOne({_id: new ObjectId(appId)});
+  if(!app) {
+    return ctx.reply("❌ App not found");
   }
 
   // Update user info
@@ -54,10 +59,9 @@ const onStart: CommandMiddleware<ContextModel> = async(ctx) => {
   // Update context
   ctx.session.state = null;
   ctx.session.data = {
-    payload: {
-      ...payload,
-      userId: String(dbResult.value?._id)
-    }
+    app: JSON.stringify(app),
+    socketId,
+    userId: String(dbResult.value?._id)
   };
 
   // Save user avatar
@@ -71,7 +75,7 @@ const onStart: CommandMiddleware<ContextModel> = async(ctx) => {
   return ctx.reply((`
     Hi ${userInfo.first_name}!
     
-    App <b>${payload.appUrl}</b> requires to authenticate you.
+    App <b>${app.url}</b> requires to authenticate you.
     
     The app will have access to your:
     

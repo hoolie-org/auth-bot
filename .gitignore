@@ -13,5 +13,5 @@ node_modules
 
 src/config.ts
 
-avatars
+avatars/*
 !avatars/.gitkeep
