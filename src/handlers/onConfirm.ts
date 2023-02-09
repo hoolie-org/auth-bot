@@ -19,11 +19,12 @@ const handler: CallbackQueryMiddleware<ContextModel> = async(ctx) => {
     userId
   });
 
-  // Delete message buttons
+  // Edit message
   await ctx.editMessageReplyMarkup();
+  await ctx.editMessageText(`✅ You successfully authenticated in app: ${$app.url}`);
 
   // Send OK message
-  return ctx.answerCallbackQuery("Authentication confirmed");
+  return ctx.answerCallbackQuery("");
 };
 
 export default handler;
