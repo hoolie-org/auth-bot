@@ -1,0 +1,17 @@
+.idea
+dist
+
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+node_modules
+
+src/config.ts
+
+avatars
+!avatars/.gitkeep
