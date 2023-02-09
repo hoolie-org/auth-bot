@@ -47,7 +47,8 @@ const onStart: CommandMiddleware<ContextModel> = async(ctx) => {
       lastUpdatedAt: new Date(),
     } as UserModel
   }, {
-    upsert: true
+    upsert: true,
+    returnDocument: "after"
   });
 
   // Update context
